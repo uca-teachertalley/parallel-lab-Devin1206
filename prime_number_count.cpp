@@ -6,6 +6,7 @@
 #include <iostream>
 #include <chrono>
 #include <cmath>
+#include <omp.h>
 using namespace std;
 
 // gen_numbers
@@ -44,11 +45,38 @@ int count_prime_serial(long int numbers[], long int how_many)
 	return count;
 }
 
+int count_prime_parallel(long int numbers[], long int how_many)
+
+{
+	int count = 0;
+#pragma omp parallel for reduction(+:count) 
+	for (int i = 0; i < how_many; i++)
+	{
+		if (is_prime(numbers[i]))
+			count++;
+	}
+	return count;
+}
+int count= 0;
+#pragma omp parallel
+{
+	cout << “Thread number” << omp_get_thread_num() << endl;
+#pragma omp for reduction(+:count) 
+	for (int i = 0; i < n; ++i) {
+		static int thread_work[128] = { 0 }; // Max 128 threads assumed
+		int tid = omp_get_thread_num();
+		thread_work[tid]++;
+
+	}
+}
+
+
 // This is the entrypoint into the program
 int main() {
+
 	long int n = 1000000;
 	long int* numbers = new long int[n];
-	
+
 	cout << "Generating numbers..." << endl;
 	// Generate numbers first
 	gen_numbers(numbers, n);
@@ -56,7 +84,7 @@ int main() {
 	cout << "Counting primes..." << endl;
 	// Count primes, use chrono to time the function
 	auto start = chrono::steady_clock::now();
-	int count = count_prime_serial(numbers, n);
+	int count = count_prime_parallel(numbers, n);
 	auto end = chrono::steady_clock::now();
 
 	// Print results
@@ -64,7 +92,8 @@ int main() {
 	cout << "Total number of primes = " << count << endl;
 	cout << "Total computation time = " << compute_time << endl;
 
-    return 0;
+	return 0;
+	
 }
 
 
